@@ -5,12 +5,13 @@ const mongoose = require('mongoose');
 //use ejs mate
 const ejsMate = require('ejs-mate');
 //add error handler helpers
-const { campgroundSchema } = require('./schemas.js');
+const { campgroundSchema, reviewSchema} = require('./schemas.js');
 const catchAsync = require('./utils/catchAsync');
 const ExpressError = require('./utils/ExpressError');
 //method override for extra methaods like put and patch and shit
 const methodOverride = require('method-override');
 const Campground = require('./models/campground');
+const Review = require('./models/review')
 
 
 
@@ -39,6 +40,22 @@ const validateCampground = (req, res, next) => {
     // if (!req.body.campground) throw new ExpressError('Invalid Campground Data', 400)
     const { error } = campgroundSchema.validate(req.body)
     if (error) {
+        const msg = error.details.map(el => el.message).join(',')
+        throw new ExpressError(msg, 400)
+    }
+    else {
+        next();
+    }
+}
+
+const validateReview = (req, res, next) => {
+    console.log('Is this middleware working?')
+    console.log(req.body)
+    const {error} = reviewSchema.validate(req.body);
+    console.log(error)
+    console.log('after finding error')
+    if (error) {
+      
         const msg = error.details.map(el => el.message).join(',')
         throw new ExpressError(msg, 400)
     }
@@ -93,6 +110,15 @@ app.delete('/campgrounds/:id', catchAsync(async (req, res, next) => {
     const { id } = req.params;
     await Campground.findByIdAndDelete(id);
     res.redirect('/campgrounds');
+}))
+
+app.post('/campgrounds/:id/reviews', validateReview, catchAsync(async (req, res) => {
+    const campground = await Campground.findById(req.params.id);
+    const review = new Review(req.body.review);
+    campground.reviews.push(review);
+    await review.save();
+    await campground.save();
+    res.redirect(`/campgrounds/${campground._id}`);
 }))
 
 app.all('*', (req, res, next) => {
