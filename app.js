@@ -49,11 +49,7 @@ const validateCampground = (req, res, next) => {
 }
 
 const validateReview = (req, res, next) => {
-    console.log('Is this middleware working?')
-    console.log(req.body)
     const {error} = reviewSchema.validate(req.body);
-    console.log(error)
-    console.log('after finding error')
     if (error) {
       
         const msg = error.details.map(el => el.message).join(',')
@@ -91,7 +87,7 @@ app.post('/campgrounds', validateCampground, catchAsync(async (req, res, next) =
 
 //create show route for individual campgrounds
 app.get('/campgrounds/:id', catchAsync(async (req, res, next) => {
-    const campground = await Campground.findById(req.params.id);
+    const campground = await Campground.findById(req.params.id).populate('reviews');
     res.render('campgrounds/show', { campground });
 }))
 
