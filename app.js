@@ -11,7 +11,8 @@ const ExpressError = require('./utils/ExpressError');
 //method override for extra methaods like put and patch and shit
 const methodOverride = require('method-override');
 const Campground = require('./models/campground');
-const Review = require('./models/review')
+const Review = require('./models/review');
+const review = require('./models/review');
 
 
 
@@ -115,6 +116,13 @@ app.post('/campgrounds/:id/reviews', validateReview, catchAsync(async (req, res)
     await review.save();
     await campground.save();
     res.redirect(`/campgrounds/${campground._id}`);
+}))
+
+app.delete('/campgrounds/:id/reviews/:reviewId', catchAsync(async (req, res) => {
+    const {id, reviewId } = req.params;
+    Campground.findByIdAndUpdate(id, {$pull: {reviews: reviewId}});
+    await Review.findByIdAndDelete(reviewId);
+    res.redirect(`/campgrounds/${id}`)
 }))
 
 app.all('*', (req, res, next) => {
